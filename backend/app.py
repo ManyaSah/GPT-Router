@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+DEFAULT_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -18,9 +18,12 @@ def test_route():
     return jsonify({"status": "API is working!"})
 
 # Helper function to classify query (not a route)
-def classify_query_helper(query):
+def classify_query_helper(query, api_key=None):
     if not query:
         return {"error": "No query provided"}, 400
+    
+    # Use provided API key or fall back to default
+    openai.api_key = api_key
 
     try:
         response = openai.chat.completions.create(
@@ -49,9 +52,9 @@ def classify_query_helper(query):
         
         # Map "Low" to "easy", "Medium" to "medium", "High" to "hard"
         difficulty_mapping = {
-            "low": "Easy",
-            "medium": "Medium",
-            "high": "Hard"
+            "low": "easy",
+            "medium": "medium",
+            "high": "hard"
         }
         
         difficulty = difficulty_mapping.get(difficulty.lower(), "unknown")
@@ -64,22 +67,23 @@ def classify_query_helper(query):
         print(f"Error in classification: {str(e)}")
         return {"error": str(e)}, 500
 
-# Classify query endpoint
-@app.route('/classify', methods=['POST'])
-def classify_query():
-    try:
-        data = request.json
-        query = data.get("query", "")
+# # Classify query endpoint
+# @app.route('/classify', methods=['POST'])
+# def classify_query():
+#     try:
+#         data = request.json
+#         query = data.get("query", "")
+#         api_key = data.get("api_key", None)
         
-        result = classify_query_helper(query)
+#         result = classify_query_helper(query, api_key)
         
-        if isinstance(result, tuple):
-            return jsonify(result[0]), result[1]
+#         if isinstance(result, tuple):
+#             return jsonify(result[0]), result[1]
             
-        return jsonify(result)
+#         return jsonify(result)
     
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 # Function to get recommended model based on difficulty
 def get_recommended_model(difficulty):
@@ -88,7 +92,7 @@ def get_recommended_model(difficulty):
         "medium": "gpt-4o-mini",
         "hard": "o3-mini"
     }
-    return models.get(difficulty.lower(), "gpt-3.5-turbo")
+    return models.get(difficulty.lower(), "unknown")
 
 # Router endpoint
 @app.route('/api/router', methods=['POST'])
@@ -96,12 +100,13 @@ def router():
     try:
         data = request.json
         question = data.get('question', '')
+        api_key = data.get('api_key', None)
         
         if not question:
             return jsonify({"error": "No question provided"}), 400
         
         # Use the helper function
-        result = classify_query_helper(question)
+        result = classify_query_helper(question, api_key)
         
         if isinstance(result, tuple):
             return jsonify(result[0]), result[1]
@@ -127,10 +132,14 @@ def get_answer():
         data = request.json
         question = data.get('question', '')
         model = data.get('model', 'gpt-3.5-turbo')
+        api_key = data.get('api_key', None)
         print(f"Attempting to use model: {model}")
         
         if not question:
             return jsonify({"error": "No question provided"}), 400
+        
+        # Create OpenAI client with the appropriate API key
+        client = openai.OpenAI(api_key=api_key or DEFAULT_API_KEY)
         
         # Define messages for the API call
         messages = [
@@ -148,7 +157,7 @@ def get_answer():
         if model != "o3-mini":
             args["temperature"] = 0.7
         
-        response = openai.chat.completions.create(**args)
+        response = client.chat.completions.create(**args)
         
         answer = response.choices[0].message.content
         

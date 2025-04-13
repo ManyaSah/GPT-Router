@@ -3,6 +3,7 @@ import "./App.css"; // Ensure styling is linked
 
 function App() {
   const [userInput, setUserInput] = useState("");
+  const [apiKey, setApiKey] = useState("");
   const [response, setResponse] = useState(null);
   const [answer, setAnswer] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,10 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userInput.trim()) return;
+    if (!apiKey.trim()) {
+      setError("Please enter your OpenAI API key");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -29,7 +34,10 @@ function App() {
       const routerResponse = await fetch("/api/router", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userInput }),
+        body: JSON.stringify({ 
+          question: userInput,
+          api_key: apiKey 
+        }),
       });
 
       if (!routerResponse.ok) {
@@ -40,9 +48,9 @@ function App() {
       
       // Create a response object with the router result
       setResponse({
-        difficulty: data.difficulty || "unkown",
+        difficulty: data.difficulty || "unknown",
         recommended_model: data.recommended_model || modelOptions.medium,
-        category: data.category || "unkown" // This is a placeholder as your backend doesn't currently provide category
+        category: data.category || "unknown" // This is a placeholder as your backend doesn't currently provide category
       });
     } catch (err) {
       console.error("Error:", err);
@@ -63,7 +71,8 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           question: userInput,
-          model: model 
+          model: model,
+          api_key: apiKey
         }),
       });
 
@@ -89,6 +98,15 @@ function App() {
       </p>
 
       <form onSubmit={handleSubmit} className="input-form">
+        <input
+          className="api-key-input"
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="Enter your OpenAI API Key"
+          disabled={loading}
+        />
+        
         <textarea
           className="input-box"
           value={userInput}
@@ -109,7 +127,7 @@ function App() {
       {error && <div className="error-message">{error}</div>}
 
       {response && (
-        <div className={`result-box difficulty-${response.difficulty}`}>
+        <div className={`result-box difficulty-${response.difficulty.toLowerCase()}`}>
           <h2 className="result-title">Analysis Result</h2>
           <p><strong>Category:</strong> {response.category}</p>
           <p><strong>Difficulty:</strong> {response.difficulty.charAt(0).toUpperCase() + response.difficulty.slice(1)}</p>
@@ -155,4 +173,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
