@@ -31,7 +31,7 @@ function App() {
 
     try {
       // Call the router endpoint to get difficulty assessment
-      const routerResponse = await fetch("https://gpt-router.onrender.com//api/router", {
+      const routerResponse = await fetch("https://gpt-router.onrender.com/api/router", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -66,7 +66,7 @@ function App() {
     setAnswer(null);
     
     try {
-      const answerResponse = await fetch("https://gpt-router.onrender.com//api/answer", {
+      const answerResponse = await fetch("https://gpt-router.onrender.com/api/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
