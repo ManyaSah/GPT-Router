@@ -1,6 +1,6 @@
 # GPT Router
 
-**GPT Router** is a web interface that routes your query to a selected AI model using a backend API. It helps choose between different GPT models (like GPT-3.5 and GPT-4) based on efficiency, cost, or need — giving you the power to optimize how queries are handled.
+**GPT Router** is a web interface that routes your query to a selected AI model using a backend API. It helps choose between different GPT models (from GPT-3.5 to o3-mini) based on efficiency, cost, or need — giving you the power to optimize how queries are handled.
 
 ## Live Website
 
